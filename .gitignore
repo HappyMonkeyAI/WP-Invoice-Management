@@ -14,3 +14,6 @@ vendor/
 .kiro/specs/invoice-backup-export-import/requirements.md
 .kiro/specs/invoice-backup-export-import/tasks.md
 .kiro/specs/
+scratch_auth.html
+.phpunit.result.cache
+wp-invoice-management/.phpunit.result.cache

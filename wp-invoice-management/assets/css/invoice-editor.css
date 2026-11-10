@@ -538,6 +538,10 @@
     margin-top: 15px;
 }
 
+.line-items-actions #addLineItem {
+    display: none;
+}
+
 .line-items-table input {
     width: 100%;
     border: 1px solid #e2e8f0;
@@ -624,6 +628,32 @@ textarea.project-header-input {
 
 .remove-item-btn:hover {
     color: var(--danger-color);
+}
+
+.add-line-item-row td {
+    padding: 6px 8px 14px 8px !important;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.add-line-item-row .btn-text {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--primary-color);
+    padding: 4px 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.add-line-item-row .btn-text:hover {
+    text-decoration: underline;
+}
+
+.add-line-item-row .btn-text .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    line-height: 16px;
 }
 
 .btn-text {

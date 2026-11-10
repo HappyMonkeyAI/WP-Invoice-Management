@@ -237,7 +237,7 @@
     }
 
     function renderLineItems(items) {
-        if (items.length === 0) {
+        if (!items || items.length === 0) {
             items = [
                 { description: 'Project Name', type: 'section' },
                 { description: '', quantity: 1, rate: 0, amount: 0, date: '', type: 'item' }
@@ -245,12 +245,30 @@
         }
 
         let html = '';
+        let hasOpenSection = false;
+
+        const addLineRowHtml = `
+            <tr class="add-line-item-row">
+                <td colspan="6">
+                    <button type="button" class="btn btn-text add-section-item-btn">
+                        <span class="dashicons dashicons-plus"></span>
+                        Add Line Item
+                    </button>
+                </td>
+            </tr>
+        `;
+
         items.forEach((item, index) => {
             if (item.type === 'section') {
+                if (hasOpenSection) {
+                    html += addLineRowHtml;
+                }
+                hasOpenSection = true;
+
                 html += `
                     <tr data-index="${index}" class="project-header-row" data-type="section">
                         <td colspan="5">
-                            <textarea class="item-description project-header-input" rows="1" placeholder="Project Name (e.g. Website Redesign)">${escapeHtml(item.description)}</textarea>
+                            <textarea class="item-description project-header-input" rows="1" placeholder="Project Name (e.g. Website Redesign)">${escapeHtml(item.description || '')}</textarea>
                         </td>
                         <td><button type="button" class="remove-item-btn"><span class="dashicons dashicons-trash"></span></button></td>
                     </tr>
@@ -276,19 +294,24 @@
                             <td class="col-actions"></td>
                         </tr>
                     `;
+                    hasOpenSection = true;
                 }
                 html += `
                     <tr data-index="${index}" data-type="item">
-                        <td class="col-date"><input type="text" class="item-date" value="${item.date || ''}" placeholder="DD/MM/YY"></td>
-                        <td class="col-description"><textarea class="item-description" rows="1" placeholder="Item description">${escapeHtml(item.description)}</textarea></td>
-                        <td class="col-qty"><input type="number" class="item-quantity" value="${item.quantity}" min="0" step="1"></td>
-                        <td class="col-rate"><input type="number" class="item-rate" value="${item.rate}" min="0" step="0.01"></td>
-                        <td class="col-amount"><input type="number" class="item-amount" value="${item.amount || 0}" readonly></td>
+                        <td class="col-date"><input type="text" class="item-date" value="${escapeHtml(item.date || '')}" placeholder="DD/MM/YY"></td>
+                        <td class="col-description"><textarea class="item-description" rows="1" placeholder="Item description">${escapeHtml(item.description || '')}</textarea></td>
+                        <td class="col-qty"><input type="number" class="item-quantity" value="${item.quantity !== undefined ? item.quantity : 1}" min="0" step="1"></td>
+                        <td class="col-rate"><input type="number" class="item-rate" value="${item.rate !== undefined ? item.rate : 0}" min="0" step="0.01"></td>
+                        <td class="col-amount"><input type="number" class="item-amount" value="${item.amount !== undefined ? item.amount : 0}" readonly></td>
                         <td class="col-actions"><button type="button" class="remove-item-btn"><span class="dashicons dashicons-trash"></span></button></td>
                     </tr>
                 `;
             }
         });
+
+        if (hasOpenSection) {
+            html += addLineRowHtml;
+        }
 
         elements.lineItemsBody.innerHTML = html;
         attachLineItemListeners();
@@ -300,6 +323,9 @@
 
     function attachLineItemListeners() {
         elements.lineItemsBody.querySelectorAll('tr[data-type]').forEach(row => {
+            if (row.dataset.bound) return;
+            row.dataset.bound = 'true';
+
             const isSection = row.dataset.type === 'section';
             
             if (!isSection) {
@@ -315,8 +341,8 @@
                     calculateTotals();
                 };
 
-                quantityInput.addEventListener('input', updateAmount);
-                rateInput.addEventListener('input', updateAmount);
+                if (quantityInput) quantityInput.addEventListener('input', updateAmount);
+                if (rateInput) rateInput.addEventListener('input', updateAmount);
 
                 if (descriptionTextarea) {
                     autoResizeTextarea(descriptionTextarea);
@@ -330,18 +356,71 @@
                 }
             }
 
-            row.querySelector('.remove-item-btn').addEventListener('click', () => {
-                // If it's a section, we also need to remove the sub-header row that follows it
-                if (isSection) {
-                    const nextRow = row.nextElementSibling;
-                    if (nextRow && nextRow.classList.contains('line-item-header-row')) {
-                        nextRow.remove();
+            const removeBtn = row.querySelector('.remove-item-btn');
+            if (removeBtn) {
+                removeBtn.addEventListener('click', () => {
+                    if (isSection) {
+                        let current = row.nextElementSibling;
+                        while (current && !current.classList.contains('project-header-row')) {
+                            const toRemove = current;
+                            current = current.nextElementSibling;
+                            toRemove.remove();
+                            if (toRemove.classList.contains('add-line-item-row')) {
+                                break;
+                            }
+                        }
+                        row.remove();
+                    } else {
+                        row.remove();
                     }
-                }
-                row.remove();
-                calculateTotals();
+                    calculateTotals();
+                });
+            }
+        });
+
+        elements.lineItemsBody.querySelectorAll('.add-section-item-btn').forEach(btn => {
+            if (btn.dataset.bound) return;
+            btn.dataset.bound = 'true';
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const addRow = btn.closest('.add-line-item-row');
+                addNewLineItemBefore(addRow);
             });
         });
+    }
+
+    function addNewLineItemBefore(targetRow) {
+        const tr = document.createElement('tr');
+        tr.dataset.type = 'item';
+        tr.innerHTML = `
+            <td class="col-date"><input type="text" class="item-date" value="" placeholder="DD/MM/YY"></td>
+            <td class="col-description"><textarea class="item-description" rows="1" placeholder="Item description"></textarea></td>
+            <td class="col-qty"><input type="number" class="item-quantity" value="1" min="0" step="1"></td>
+            <td class="col-rate"><input type="number" class="item-rate" value="0" min="0" step="0.01"></td>
+            <td class="col-amount"><input type="number" class="item-amount" value="0.00" readonly></td>
+            <td class="col-actions"><button type="button" class="remove-item-btn"><span class="dashicons dashicons-trash"></span></button></td>
+        `;
+
+        if (targetRow && targetRow.parentNode) {
+            targetRow.parentNode.insertBefore(tr, targetRow);
+        } else {
+            elements.lineItemsBody.appendChild(tr);
+        }
+
+        attachLineItemListeners();
+        calculateTotals();
+
+        const desc = tr.querySelector('.item-description');
+        if (desc) {
+            autoResizeTextarea(desc);
+        }
+
+        const dateInput = tr.querySelector('.item-date');
+        if (dateInput) {
+            dateInput.focus();
+        } else if (desc) {
+            desc.focus();
+        }
     }
 
     function calculateTotals() {
@@ -623,40 +702,78 @@
         elements.toAddress.addEventListener('input', autoSelectMatchingCustomer);
     }
 
-    elements.addLineItem.addEventListener('click', () => {
-        const tbody = elements.lineItemsBody;
-        const index = tbody.children.length;
-        const tr = document.createElement('tr');
-        tr.dataset.index = index;
-        tr.dataset.type = 'item';
-        tr.innerHTML = `
-            <td><input type="text" class="item-date" value="" placeholder="DD/MM/YY"></td>
-            <td><input type="text" class="item-description" value="" placeholder="Item description"></td>
-            <td><input type="number" class="item-quantity" value="1" min="0" step="1"></td>
-            <td><input type="number" class="item-rate" value="0" min="0" step="0.01"></td>
-            <td><input type="number" class="item-amount" value="0" readonly></td>
-            <td><button type="button" class="remove-item-btn"><span class="dashicons dashicons-trash"></span></button></td>
-        `;
-        tbody.appendChild(tr);
-        attachLineItemListeners();
-    });
+    if (elements.addLineItem) {
+        elements.addLineItem.addEventListener('click', () => {
+            const addRows = elements.lineItemsBody.querySelectorAll('.add-line-item-row');
+            if (addRows.length > 0) {
+                addNewLineItemBefore(addRows[addRows.length - 1]);
+            } else {
+                addNewLineItemBefore(null);
+            }
+        });
+    }
 
-    elements.addProjectHeader.addEventListener('click', () => {
-        const tbody = elements.lineItemsBody;
-        const index = tbody.children.length;
-        const tr = document.createElement('tr');
-        tr.dataset.index = index;
-        tr.dataset.type = 'section';
-        tr.className = 'project-header-row';
-        tr.innerHTML = `
-            <td colspan="5">
-                <input type="text" class="item-description project-header-input" value="" placeholder="Project Name (e.g. Website Redesign)">
-            </td>
-            <td><button type="button" class="remove-item-btn"><span class="dashicons dashicons-trash"></span></button></td>
-        `;
-        tbody.appendChild(tr);
-        attachLineItemListeners();
-    });
+    if (elements.addProjectHeader) {
+        elements.addProjectHeader.addEventListener('click', () => {
+            const tbody = elements.lineItemsBody;
+
+            const projectTr = document.createElement('tr');
+            projectTr.dataset.type = 'section';
+            projectTr.className = 'project-header-row';
+            projectTr.innerHTML = `
+                <td colspan="5">
+                    <textarea class="item-description project-header-input" rows="1" placeholder="Project Name (e.g. Website Redesign)"></textarea>
+                </td>
+                <td><button type="button" class="remove-item-btn"><span class="dashicons dashicons-trash"></span></button></td>
+            `;
+            tbody.appendChild(projectTr);
+
+            const headerTr = document.createElement('tr');
+            headerTr.className = 'line-item-header-row';
+            headerTr.innerHTML = `
+                <td class="col-date">Date</td>
+                <td class="col-description">Description</td>
+                <td class="col-qty">Qty</td>
+                <td class="col-rate">Rate (${WP_INVOICE_API.settings.currency_symbol})</td>
+                <td class="col-amount">Amount (${WP_INVOICE_API.settings.currency_symbol})</td>
+                <td class="col-actions"></td>
+            `;
+            tbody.appendChild(headerTr);
+
+            const itemTr = document.createElement('tr');
+            itemTr.dataset.type = 'item';
+            itemTr.innerHTML = `
+                <td class="col-date"><input type="text" class="item-date" value="" placeholder="DD/MM/YY"></td>
+                <td class="col-description"><textarea class="item-description" rows="1" placeholder="Item description"></textarea></td>
+                <td class="col-qty"><input type="number" class="item-quantity" value="1" min="0" step="1"></td>
+                <td class="col-rate"><input type="number" class="item-rate" value="0" min="0" step="0.01"></td>
+                <td class="col-amount"><input type="number" class="item-amount" value="0.00" readonly></td>
+                <td class="col-actions"><button type="button" class="remove-item-btn"><span class="dashicons dashicons-trash"></span></button></td>
+            `;
+            tbody.appendChild(itemTr);
+
+            const addTr = document.createElement('tr');
+            addTr.className = 'add-line-item-row';
+            addTr.innerHTML = `
+                <td colspan="6">
+                    <button type="button" class="btn btn-text add-section-item-btn">
+                        <span class="dashicons dashicons-plus"></span>
+                        Add Line Item
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(addTr);
+
+            attachLineItemListeners();
+            calculateTotals();
+
+            const input = projectTr.querySelector('.project-header-input');
+            if (input) {
+                autoResizeTextarea(input);
+                input.focus();
+            }
+        });
+    }
 
     elements.saveInvoiceBtn.addEventListener('click', saveInvoice);
     elements.duplicateInvoiceBtn.addEventListener('click', duplicateInvoice);

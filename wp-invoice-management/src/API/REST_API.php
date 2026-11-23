@@ -45,6 +45,7 @@ class REST_API {
                         'quantity'    => array( 'type' => 'number' ),
                         'rate'        => array( 'type' => 'number' ),
                         'date'        => array( 'type' => 'string' ),
+                        'date_to'     => array( 'type' => 'string' ),
                     ),
                 ),
             ),
@@ -619,6 +620,7 @@ class REST_API {
                         $sanitized_item['rate']     = $rate;
                         $sanitized_item['amount']   = $qty * $rate;
                         $sanitized_item['date']     = isset( $item['date'] ) ? sanitize_text_field( $item['date'] ) : '';
+                        $sanitized_item['date_to']  = isset( $item['date_to'] ) ? sanitize_text_field( $item['date_to'] ) : '';
                     }
 
                     $items[] = $sanitized_item;

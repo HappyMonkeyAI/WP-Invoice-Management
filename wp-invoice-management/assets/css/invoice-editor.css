@@ -532,6 +532,16 @@
 .col-amount { width: 120px; }
 .col-actions { width: 40px; }
 
+.date-inputs-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.date-inputs-group input {
+    width: 100%;
+}
+
 .line-items-actions {
     display: flex;
     gap: 15px;

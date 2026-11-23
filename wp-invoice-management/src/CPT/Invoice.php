@@ -318,6 +318,7 @@ class Invoice {
 
                     if ( $new_item['type'] === 'item' ) {
                         $new_item['date']     = sanitize_text_field( $item['date'] ?? '' );
+                        $new_item['date_to']  = sanitize_text_field( $item['date_to'] ?? '' );
                         $new_item['quantity'] = floatval( $item['quantity'] );
                         $new_item['rate']     = floatval( $item['rate'] );
                         $new_item['amount']   = floatval( $item['quantity'] ) * floatval( $item['rate'] );

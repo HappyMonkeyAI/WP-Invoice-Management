@@ -368,6 +368,7 @@ class BackupImporter {
                     'rate'        => isset( $item['rate'] ) ? floatval( $item['rate'] ) : 0,
                     'amount'      => isset( $item['amount'] ) ? floatval( $item['amount'] ) : 0,
                     'date'        => isset( $item['date'] ) ? sanitize_text_field( $item['date'] ) : '',
+                    'date_to'     => isset( $item['date_to'] ) ? sanitize_text_field( $item['date_to'] ) : '',
                 );
 
                 $items[] = $sanitized_item;

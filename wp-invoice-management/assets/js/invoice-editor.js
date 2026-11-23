@@ -298,7 +298,12 @@
                 }
                 html += `
                     <tr data-index="${index}" data-type="item">
-                        <td class="col-date"><input type="text" class="item-date" value="${escapeHtml(item.date || '')}" placeholder="DD/MM/YY"></td>
+                        <td class="col-date">
+                            <div class="date-inputs-group">
+                                <input type="text" class="item-date" value="${escapeHtml(item.date || '')}" placeholder="DD/MM/YY">
+                                <input type="text" class="item-date-to" value="${escapeHtml(item.date_to || '')}" placeholder="To DD/MM/YY">
+                            </div>
+                        </td>
                         <td class="col-description"><textarea class="item-description" rows="1" placeholder="Item description">${escapeHtml(item.description || '')}</textarea></td>
                         <td class="col-qty"><input type="number" class="item-quantity" value="${item.quantity !== undefined ? item.quantity : 1}" min="0" step="1"></td>
                         <td class="col-rate"><input type="number" class="item-rate" value="${item.rate !== undefined ? item.rate : 0}" min="0" step="0.01"></td>
@@ -393,7 +398,12 @@
         const tr = document.createElement('tr');
         tr.dataset.type = 'item';
         tr.innerHTML = `
-            <td class="col-date"><input type="text" class="item-date" value="" placeholder="DD/MM/YY"></td>
+            <td class="col-date">
+                <div class="date-inputs-group">
+                    <input type="text" class="item-date" value="" placeholder="DD/MM/YY">
+                    <input type="text" class="item-date-to" value="" placeholder="To DD/MM/YY">
+                </div>
+            </td>
             <td class="col-description"><textarea class="item-description" rows="1" placeholder="Item description"></textarea></td>
             <td class="col-qty"><input type="number" class="item-quantity" value="1" min="0" step="1"></td>
             <td class="col-rate"><input type="number" class="item-rate" value="0" min="0" step="0.01"></td>
@@ -466,10 +476,13 @@
                     date: ''
                 });
             } else {
+                const dateInput = row.querySelector('.item-date');
+                const dateToInput = row.querySelector('.item-date-to');
                 items.push({
                     description,
                     type: 'item',
-                    date: row.querySelector('.item-date').value,
+                    date: dateInput ? dateInput.value : '',
+                    date_to: dateToInput ? dateToInput.value : '',
                     quantity: parseFloat(row.querySelector('.item-quantity').value) || 0,
                     rate: parseFloat(row.querySelector('.item-rate').value) || 0,
                     amount: parseFloat(row.querySelector('.item-amount').value) || 0
@@ -743,7 +756,12 @@
             const itemTr = document.createElement('tr');
             itemTr.dataset.type = 'item';
             itemTr.innerHTML = `
-                <td class="col-date"><input type="text" class="item-date" value="" placeholder="DD/MM/YY"></td>
+                <td class="col-date">
+                    <div class="date-inputs-group">
+                        <input type="text" class="item-date" value="" placeholder="DD/MM/YY">
+                        <input type="text" class="item-date-to" value="" placeholder="To DD/MM/YY">
+                    </div>
+                </td>
                 <td class="col-description"><textarea class="item-description" rows="1" placeholder="Item description"></textarea></td>
                 <td class="col-qty"><input type="number" class="item-quantity" value="1" min="0" step="1"></td>
                 <td class="col-rate"><input type="number" class="item-rate" value="0" min="0" step="0.01"></td>

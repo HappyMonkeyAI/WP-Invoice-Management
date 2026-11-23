@@ -12,9 +12,89 @@ class Plugin {
     }
 
     public function run() {
+        error_log( 'WPIM: run() called, HTTP_HOST=' . ( $_SERVER['HTTP_HOST'] ?? 'NOT SET' ) );
+        $this->resolve_dynamic_site_url();
         $this->init_cpts();
         $this->init_hooks();
         flush_rewrite_rules();
+    }
+
+    private function resolve_dynamic_site_url() {
+        if ( isset( $_SERVER['HTTP_HOST'] ) ) {
+            $host = sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) );
+            $scheme = is_ssl() ? 'https' : 'http';
+            $dynamic_url = $scheme . '://' . $host;
+
+            $old_home = get_option( 'home' );
+            error_log( "WPIM: resolve_dynamic_site_url - host=$host, old_home=$old_home" );
+
+            add_filter( 'pre_option_home', function( $value ) use ( $dynamic_url ) {
+                return $dynamic_url;
+            }, 20 );
+
+            add_filter( 'pre_option_siteurl', function( $value ) use ( $dynamic_url ) {
+                return $dynamic_url;
+            }, 20 );
+
+            if ( $old_home ) {
+                $old_host = parse_url( $old_home, PHP_URL_HOST );
+                $old_port = parse_url( $old_home, PHP_URL_PORT );
+                error_log( "WPIM: will fix URLs from host=$old_host, port=" . ($old_port ?? 'null') );
+
+                $fix_url = function( $url ) use ( $old_host, $old_port, $host ) {
+                    error_log( "WPIM: fix_url input: $url" );
+                    $parsed = parse_url( $url );
+                    if ( $parsed === false || ! isset( $parsed['host'] ) ) {
+                        return $url;
+                    }
+                    if ( $parsed['host'] !== $old_host ) {
+                        return $url;
+                    }
+                    if ( $old_port !== null && ( ! isset( $parsed['port'] ) || (int) $parsed['port'] !== $old_port ) ) {
+                        return $url;
+                    }
+                    $new_url = ( isset( $parsed['scheme'] ) ? $parsed['scheme'] . '://' : '' ) . $host;
+                    if ( isset( $parsed['path'] ) ) {
+                        $new_url .= $parsed['path'];
+                    }
+                    if ( isset( $parsed['query'] ) ) {
+                        $new_url .= '?' . $parsed['query'];
+                    }
+                    if ( isset( $parsed['fragment'] ) ) {
+                        $new_url .= '#' . $parsed['fragment'];
+                    }
+                    return $new_url;
+                };
+
+                add_filter( 'plugins_url', $fix_url, 20 );
+                add_filter( 'content_url', $fix_url, 20 );
+                add_filter( 'template_directory_uri', $fix_url, 20 );
+                add_filter( 'stylesheet_directory_uri', $fix_url, 20 );
+                add_filter( 'wp_get_attachment_url', $fix_url, 20 );
+                add_filter( 'script_loader_src', $fix_url, 20 );
+                add_filter( 'style_loader_src', $fix_url, 20 );
+                add_filter( 'upload_dir', function( $uploads ) use ( $old_host, $old_port, $host ) {
+                    if ( is_array( $uploads ) ) {
+                        foreach ( array( 'url', 'baseurl' ) as $key ) {
+                            if ( isset( $uploads[ $key ] ) ) {
+                                $parsed = parse_url( $uploads[ $key ] );
+                                if ( $parsed && isset( $parsed['host'] ) && $parsed['host'] === $old_host ) {
+                                    if ( $old_port !== null && ( ! isset( $parsed['port'] ) || (int) $parsed['port'] !== $old_port ) ) {
+                                        continue;
+                                    }
+                                    $new = ( isset( $parsed['scheme'] ) ? $parsed['scheme'] . '://' : '' ) . $host;
+                                    if ( isset( $parsed['path'] ) ) {
+                                        $new .= $parsed['path'];
+                                    }
+                                    $uploads[ $key ] = $new;
+                                }
+                            }
+                        }
+                    }
+                    return $uploads;
+                }, 20 );
+            }
+        }
     }
 
     private function init_cpts() {
@@ -396,7 +476,15 @@ class Plugin {
                     </tr>
                     <?php endif; ?>
                     <tr>
-                        <td style="font-size: 12px; color: #666;"><?php echo esc_html( $item['date'] ?? '' ); ?></td>
+                        <td style="font-size: 12px; color: #666; white-space: nowrap;">
+                            <?php 
+                            $date_display = esc_html( $item['date'] ?? '' );
+                            if ( ! empty( $item['date_to'] ) ) {
+                                $date_display = ( $date_display ? $date_display . ' - ' : '' ) . esc_html( $item['date_to'] );
+                            }
+                            echo $date_display;
+                            ?>
+                        </td>
                         <td><?php echo esc_html( $item['description'] ); ?></td>
                         <td><?php echo esc_html( $item['quantity'] ); ?></td>
                         <td><?php echo $currency . number_format( floatval( $item['rate'] ), 2 ); ?></td>

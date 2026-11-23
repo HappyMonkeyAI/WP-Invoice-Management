@@ -237,6 +237,8 @@ class REST_API {
         $per_page = absint( $request->get_param( 'per_page' ) ?: 10 );
         $page     = absint( $request->get_param( 'page' ) ?: 1 );
         $search   = sanitize_text_field( $request->get_param( 'search' ) ?? '' );
+        $client      = sanitize_text_field( $request->get_param( 'client' ) ?? '' );
+        $item_search = sanitize_text_field( $request->get_param( 'item_search' ) ?? '' );
         $order    = strtoupper( $request->get_param( 'order' ) ) === 'ASC' ? 'ASC' : 'DESC';
 
         // Allowlist orderby values to prevent arbitrary meta key injection.
@@ -253,6 +255,20 @@ class REST_API {
             's'              => $search,
             'post_status'    => 'publish',
         );
+
+        // The client is free text in _invoice_to, not a relation to wp_customer.
+        // _invoice_items is a serialized array, so LIKE matches description text
+        // but would also match a stored key name such as "date".
+        $meta_query = array();
+        if ( $client !== '' ) {
+            $meta_query[] = array( 'key' => '_invoice_to', 'value' => $client, 'compare' => 'LIKE' );
+        }
+        if ( $item_search !== '' ) {
+            $meta_query[] = array( 'key' => '_invoice_items', 'value' => $item_search, 'compare' => 'LIKE' );
+        }
+        if ( $meta_query ) {
+            $args['meta_query'] = $meta_query;
+        }
 
         if ( $orderby === 'date' ) {
             $args['orderby']  = 'meta_value';

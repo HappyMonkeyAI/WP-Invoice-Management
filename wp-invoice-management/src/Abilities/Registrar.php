@@ -31,14 +31,14 @@ class Registrar {
     public function register_abilities() {
         $this->register( 'wp-invoice/list-invoices', array(
             'label'       => __( 'List invoices', 'wp-invoice-management' ),
-            'description' => __( 'List invoices visible to the current user, newest first. Returns id, title, status, client, dates and totals. Use this to find an invoice id before reading or updating it.', 'wp-invoice-management' ),
+            'description' => __( 'List invoices visible to the current user. Returns id, title, status, client, dates and totals. Use this to find an invoice id before reading or updating it. Order by invoice_number to sort on the number in the title (77, 76, 75) rather than the internal post id, which differs; title sorts alphabetically and date sorts on the issued date.', 'wp-invoice-management' ),
             'input_schema' => array(
                 'type'       => 'object',
                 'properties' => array(
                     'per_page' => array( 'type' => 'integer', 'minimum' => 1, 'maximum' => 100 ),
                     'page'     => array( 'type' => 'integer', 'minimum' => 1 ),
                     'search'   => array( 'type' => 'string' ),
-                    'orderby'  => array( 'type' => 'string', 'enum' => array( 'date', 'due_date', 'total', 'title' ) ),
+                    'orderby'  => array( 'type' => 'string', 'enum' => array( 'date', 'due_date', 'total', 'title', 'invoice_number' ) ),
                     'order'    => array( 'type' => 'string', 'enum' => array( 'ASC', 'DESC' ) ),
                 ),
             ),

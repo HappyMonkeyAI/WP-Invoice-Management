@@ -240,7 +240,7 @@ class REST_API {
         $order    = strtoupper( $request->get_param( 'order' ) ) === 'ASC' ? 'ASC' : 'DESC';
 
         // Allowlist orderby values to prevent arbitrary meta key injection.
-        $allowed_orderby = array( 'date', 'due_date', 'total', 'title' );
+        $allowed_orderby = array( 'date', 'due_date', 'total', 'title', 'invoice_number' );
         $orderby         = in_array( $request->get_param( 'orderby' ), $allowed_orderby, true )
             ? $request->get_param( 'orderby' )
             : 'date';
@@ -267,11 +267,32 @@ class REST_API {
             $args['orderby'] = 'title';
         }
 
+        // Invoice numbers live in the title ("Invoice #77"), so a plain title sort
+        // is lexicographic and would place #100 before #77. Sort the trailing
+        // number numerically, falling back to title for non-numeric titles.
+        $number_orderby = null;
+        if ( $orderby === 'invoice_number' ) {
+            $args['orderby'] = 'title';
+            $number_orderby  = function ( $sql, $q ) use ( $order ) {
+                if ( $q->get( 'post_type' ) !== 'wp_invoice' ) {
+                    return $sql;
+                }
+                global $wpdb;
+                return "CAST(SUBSTRING_INDEX({$wpdb->posts}.post_title, '#', -1) AS UNSIGNED) {$order}, {$sql}";
+            };
+            add_filter( 'posts_orderby', $number_orderby, 10, 2 );
+        }
+
         if ( ! current_user_can( 'manage_options' ) ) {
             $args['author'] = get_current_user_id();
         }
 
         $query = new \WP_Query( $args );
+
+        if ( $number_orderby ) {
+            remove_filter( 'posts_orderby', $number_orderby, 10 );
+        }
+
         $invoices = array();
 
         foreach ( $query->posts as $post ) {

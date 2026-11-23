@@ -175,6 +175,7 @@ class Registrar {
     private function write_schema( $is_update ) {
         $properties = array(
             'title'       => array( 'type' => 'string' ),
+            'logo_id'     => array( 'type' => 'integer' ),
             'status'      => array( 'type' => 'string', 'enum' => array( 'open', 'paid', 'overdue', 'draft', 'sent' ) ),
             'date'        => array( 'type' => 'string' ),
             'due_date'    => array( 'type' => 'string' ),
@@ -265,7 +266,7 @@ class Registrar {
     }
 
     private function invoice_payload( $input ) {
-        $fields = array( 'title', 'status', 'date', 'due_date', 'po_number', 'from', 'to', 'ship_to', 'notes', 'terms', 'tax', 'discount', 'shipping', 'amount_paid', 'items' );
+        $fields = array( 'title', 'logo_id', 'status', 'date', 'due_date', 'po_number', 'from', 'to', 'ship_to', 'notes', 'terms', 'tax', 'discount', 'shipping', 'amount_paid', 'items' );
         return $this->pick( $input, $fields );
     }
 

@@ -122,7 +122,7 @@ class Registrar {
                 'required'   => array( 'id', 'status' ),
                 'properties' => array(
                     'id'     => array( 'type' => 'integer' ),
-                    'status' => array( 'type' => 'string', 'enum' => array( 'open', 'paid', 'overdue', 'draft', 'sent' ) ),
+                    'status' => array( 'type' => 'string', 'enum' => array( 'open', 'paid', 'overdue', 'draft', 'sent', 'chased' ) ),
                 ),
             ),
             'meta' => array( 'annotations' => array( 'readonly' => false, 'destructive' => false, 'idempotent' => true ) ),
@@ -176,7 +176,7 @@ class Registrar {
         $properties = array(
             'title'       => array( 'type' => 'string' ),
             'logo_id'     => array( 'type' => 'integer' ),
-            'status'      => array( 'type' => 'string', 'enum' => array( 'open', 'paid', 'overdue', 'draft', 'sent' ) ),
+            'status'      => array( 'type' => 'string', 'enum' => array( 'open', 'paid', 'overdue', 'draft', 'sent', 'chased' ) ),
             'date'        => array( 'type' => 'string' ),
             'due_date'    => array( 'type' => 'string' ),
             'po_number'   => array( 'type' => 'string' ),

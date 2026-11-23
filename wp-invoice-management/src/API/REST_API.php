@@ -18,7 +18,7 @@ class REST_API {
             ),
             'status'      => array(
                 'type' => 'string',
-                'enum' => array( 'open', 'paid', 'overdue', 'draft', 'sent' ),
+                'enum' => array( 'open', 'paid', 'overdue', 'draft', 'sent', 'chased' ),
             ),
             'date'        => array( 'type' => 'string' ),
             'due_date'    => array( 'type' => 'string' ),
@@ -166,7 +166,7 @@ class REST_API {
                     'before_invoice_id' => array( 'type' => 'integer', 'required' => true ),
                     'status'            => array(
                         'type' => 'string',
-                        'enum' => array( 'open', 'paid', 'overdue', 'draft', 'sent' ),
+                        'enum' => array( 'open', 'paid', 'overdue', 'draft', 'sent', 'chased' ),
                         'required' => true,
                     ),
                 ),
@@ -432,7 +432,7 @@ class REST_API {
         $data   = $request->get_json_params();
         $status = isset( $data['status'] ) ? sanitize_text_field( $data['status'] ) : '';
 
-        $allowed_statuses = array( 'open', 'paid', 'overdue', 'draft', 'sent' );
+        $allowed_statuses = array( 'open', 'paid', 'overdue', 'draft', 'sent', 'chased' );
         if ( ! in_array( $status, $allowed_statuses, true ) ) {
             return new \WP_Error( 'invalid_status', 'Invalid status value', array( 'status' => 400 ) );
         }
@@ -624,7 +624,7 @@ class REST_API {
                 } elseif ( in_array( $data_key, array( 'tax', 'discount', 'shipping', 'amount_paid' ), true ) ) {
                     $value = floatval( $value );
                 } elseif ( $data_key === 'status' ) {
-                    $allowed_statuses = array( 'open', 'paid', 'overdue', 'draft', 'sent' );
+                    $allowed_statuses = array( 'open', 'paid', 'overdue', 'draft', 'sent', 'chased' );
                     $value = in_array( $value, $allowed_statuses, true ) ? $value : 'open';
                 } else {
                     $value = sanitize_text_field( $value );

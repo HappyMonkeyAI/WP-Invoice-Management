@@ -263,6 +263,7 @@
 .status-badge.draft { background: #f1f5f9; color: #64748b; }
 .status-badge.open { background: #dbeafe; color: #2563eb; }
 .status-badge.sent { background: #fef3c7; color: #d97706; }
+.status-badge.chased { background: #f3e8ff; color: #7c3aed; }
 .status-badge.paid { background: #dcfce7; color: #16a34a; }
 .status-badge.overdue { background: #fee2e2; color: #dc2626; }
 

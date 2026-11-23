@@ -377,6 +377,7 @@ class Plugin {
         .status-open { background: #e3f2fd; color: #1565c0; }
         .status-paid { background: #e8f5e9; color: #2e7d32; }
         .status-overdue { background: #ffebee; color: #c62828; }
+        .status-chased { background: #f3e8ff; color: #7c3aed; }
         .project-header td { background: #f9fafb; font-weight: bold; border-bottom: 2px solid #eee; padding-top: 15px; }
         .sub-header td { font-size: 10px; font-weight: bold; text-transform: uppercase; color: #666; background: #fff; padding: 5px 12px; border-bottom: 1px solid #eee; }
         .notes-terms { margin-top: 40px; }

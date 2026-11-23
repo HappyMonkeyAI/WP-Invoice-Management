@@ -90,6 +90,7 @@
                                 <option value="draft">Draft</option>
                                 <option value="open">Open</option>
                                 <option value="sent">Sent</option>
+                                <option value="chased">Chased</option>
                                 <option value="paid">Paid</option>
                                 <option value="overdue">Overdue</option>
                             </select>

@@ -263,6 +263,7 @@ class Invoice {
             <option value="draft" <?php selected( $status, 'draft' ); ?>><?php _e( 'Draft', 'wp-invoice-management' ); ?></option>
             <option value="open" <?php selected( $status, 'open' ); ?>><?php _e( 'Open', 'wp-invoice-management' ); ?></option>
             <option value="sent" <?php selected( $status, 'sent' ); ?>><?php _e( 'Sent', 'wp-invoice-management' ); ?></option>
+            <option value="chased" <?php selected( $status, 'chased' ); ?>><?php _e( 'Chased', 'wp-invoice-management' ); ?></option>
             <option value="paid" <?php selected( $status, 'paid' ); ?>><?php _e( 'Paid', 'wp-invoice-management' ); ?></option>
             <option value="overdue" <?php selected( $status, 'overdue' ); ?>><?php _e( 'Overdue', 'wp-invoice-management' ); ?></option>
         </select>

@@ -103,6 +103,7 @@ class Plugin {
         new API\REST_API();
         new API\BackupRestAPI();
         new API\AuthAPI();
+        new Abilities\Registrar();
         new Admin\ImportPage();
     }
 
@@ -253,22 +254,40 @@ class Plugin {
     }
 
     public function generate_pdf( $invoice_id ) {
+        $pdf = $this->get_pdf_bytes( $invoice_id );
+
+        if ( is_wp_error( $pdf ) ) {
+            wp_die( $pdf->get_error_message() );
+        }
+
+        header( 'Content-Type: application/pdf' );
+        header( 'Content-Disposition: attachment; filename="invoice-' . intval( $invoice_id ) . '.pdf"' );
+        header( 'Content-Length: ' . strlen( $pdf ) );
+        echo $pdf;
+        exit;
+    }
+
+    /**
+     * Renders an invoice PDF and returns the raw bytes, or a WP_Error.
+     *
+     * Must run where ImageMagick has a PNG delegate: dompdf's transparent-PNG
+     * path uses imagick with no GD fallback, so a CLI image without the delegate
+     * throws on any invoice carrying a PNG logo.
+     */
+    public function get_pdf_bytes( $invoice_id ) {
         if ( ! $invoice_id ) {
-            wp_die( 'Invalid invoice' );
+            return new \WP_Error( 'invalid_invoice', 'Invalid invoice' );
         }
 
         $post = get_post( $invoice_id );
         if ( ! $post || $post->post_type !== 'wp_invoice' ) {
-            wp_die( 'Invoice not found' );
+            return new \WP_Error( 'not_found', 'Invoice not found' );
         }
 
-        // Check permissions: admins can download any invoice; other users only their own.
+        // Admins can download any invoice; other users only their own.
         if ( ! current_user_can( 'manage_options' ) ) {
-            if ( ! is_user_logged_in() ) {
-                wp_die( 'Permission denied' );
-            }
-            if ( (int) $post->post_author !== get_current_user_id() ) {
-                wp_die( 'Permission denied' );
+            if ( ! is_user_logged_in() || (int) $post->post_author !== get_current_user_id() ) {
+                return new \WP_Error( 'forbidden', 'Permission denied' );
             }
         }
 
@@ -286,12 +305,11 @@ class Plugin {
             $dompdf->setPaper( 'A4', 'portrait' );
             $dompdf->render();
 
-            $dompdf->stream( 'invoice-' . $invoice_id . '.pdf', array( 'Attachment' => true ) );
+            return $dompdf->output();
         } catch ( \Exception $e ) {
             error_log( 'WP Invoice PDF Generation Error (ID: ' . $invoice_id . '): ' . $e->getMessage() );
-            wp_die( 'An error occurred while generating the PDF. Please try again or contact support.' );
+            return new \WP_Error( 'pdf_failed', 'An error occurred while generating the PDF. Please try again or contact support.' );
         }
-        exit;
     }
 
     private function render_invoice_template( $post ) {
